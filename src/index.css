@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.cartoon-map-tiles {
+  filter: saturate(1.2);
+}

@@ -1,0 +1,8 @@
+{
+  "name": "原路返回 (Return to Origin)",
+  "description": "自动记录轨迹并语音导航原路返回",
+  "requestFramePermissions": [
+    "geolocation",
+    "screen-wake-lock"
+  ]
+}

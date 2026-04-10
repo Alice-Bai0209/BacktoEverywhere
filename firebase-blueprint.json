@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "Trip": {
+      "title": "Trip",
+      "description": "A recorded journey by a user",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who owns this trip"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the trip"
+        },
+        "startTime": {
+          "type": "number",
+          "description": "Timestamp when the trip started"
+        },
+        "endTime": {
+          "type": "number",
+          "description": "Timestamp when the trip ended"
+        },
+        "distance": {
+          "type": "number",
+          "description": "Total distance in meters"
+        },
+        "riskCount": {
+          "type": "number",
+          "description": "Number of risk points"
+        }
+      },
+      "required": ["userId", "name", "startTime"]
+    },
+    "Point": {
+      "title": "Point",
+      "description": "A single GPS coordinate in a trip",
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "description": "Latitude"
+        },
+        "lng": {
+          "type": "number",
+          "description": "Longitude"
+        },
+        "alt": {
+          "type": "number",
+          "description": "Altitude in meters"
+        },
+        "time": {
+          "type": "number",
+          "description": "Timestamp of the point"
+        },
+        "risk": {
+          "type": "string",
+          "description": "Risk warning message, if any"
+        }
+      },
+      "required": ["lat", "lng", "time"]
+    },
+    "SavedLocation": {
+      "title": "SavedLocation",
+      "description": "A location marked by the user",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user who owns this location"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the location"
+        },
+        "lat": {
+          "type": "number",
+          "description": "Latitude"
+        },
+        "lng": {
+          "type": "number",
+          "description": "Longitude"
+        },
+        "description": {
+          "type": "string",
+          "description": "User notes for this location"
+        },
+        "createdAt": {
+          "type": "number",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["userId", "name", "lat", "lng", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/trips/{tripId}": {
+      "schema": {
+        "$ref": "#/entities/Trip"
+      },
+      "description": "Trips recorded by the user"
+    },
+    "/users/{userId}/trips/{tripId}/points/{pointId}": {
+      "schema": {
+        "$ref": "#/entities/Point"
+      },
+      "description": "GPS points for a specific trip"
+    },
+    "/users/{userId}/locations/{locationId}": {
+      "schema": {
+        "$ref": "#/entities/SavedLocation"
+      },
+      "description": "Locations saved by the user"
+    }
+  }
+}

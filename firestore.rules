@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasOnlyAllowedFields(allowedFields) {
+      return request.resource.data.keys().hasOnly(allowedFields);
+    }
+    
+    function hasRequiredFields(requiredFields) {
+      return request.resource.data.keys().hasAll(requiredFields);
+    }
+    
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidTrip() {
+      let data = request.resource.data;
+      return hasRequiredFields(['userId', 'name', 'startTime']) &&
+             hasOnlyAllowedFields(['userId', 'name', 'startTime', 'endTime', 'distance', 'riskCount']) &&
+             data.userId is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.startTime is number &&
+             (!('endTime' in data) || data.endTime is number) &&
+             (!('distance' in data) || data.distance is number) &&
+             (!('riskCount' in data) || data.riskCount is number);
+    }
+    
+    function isValidPoint() {
+      let data = request.resource.data;
+      return hasRequiredFields(['lat', 'lng', 'time']) &&
+             hasOnlyAllowedFields(['lat', 'lng', 'alt', 'time', 'risk']) &&
+             data.lat is number &&
+             data.lng is number &&
+             data.time is number &&
+             (!('alt' in data) || data.alt is number || data.alt == null) &&
+             (!('risk' in data) || (data.risk is string && data.risk.size() < 500));
+    }
+    
+    function isValidSavedLocation() {
+      let data = request.resource.data;
+      return hasRequiredFields(['userId', 'name', 'lat', 'lng', 'createdAt']) &&
+             hasOnlyAllowedFields(['userId', 'name', 'lat', 'lng', 'description', 'createdAt']) &&
+             data.userId is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.lat is number &&
+             data.lng is number &&
+             data.createdAt is number &&
+             (!('description' in data) || (data.description is string && data.description.size() < 1000));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    match /users/{userId} {
+      // Allow users to read/write their own trips
+      match /trips/{tripId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidTrip() && request.resource.data.userId == userId;
+        allow update: if isOwner(userId) && isValidTrip() && request.resource.data.userId == userId && request.resource.data.startTime == resource.data.startTime;
+        allow delete: if isOwner(userId);
+        
+        // Allow users to read/write points within their trips
+        match /points/{pointId} {
+          allow read: if isOwner(userId);
+          allow create: if isOwner(userId) && isValidPoint();
+          allow update: if isOwner(userId) && isValidPoint();
+          allow delete: if isOwner(userId);
+        }
+      }
+      
+      // Allow users to read/write their own saved locations
+      match /locations/{locationId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSavedLocation() && request.resource.data.userId == userId;
+        allow update: if isOwner(userId) && isValidSavedLocation() && request.resource.data.userId == userId && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
